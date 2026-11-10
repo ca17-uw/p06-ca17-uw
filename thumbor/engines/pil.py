@@ -277,6 +277,15 @@ class Engine(BaseEngine):
                     else None
                 )
                 self.image = self.image.quantize(method=quantize_method)
+                # quantize() keeps the transparent colour in the palette but
+                # does not set info["transparency"], so the GIF writer would
+                # write an opaque image. Restore the index of the fully
+                # transparent palette entry.
+                palette = self.image.getpalette(rawmode="RGBA") or []
+                for index, alpha in enumerate(palette[3::4]):
+                    if alpha == 0:
+                        self.image.info["transparency"] = index
+                        break
 
         ext = requested_extension or self.get_default_extension()
 
